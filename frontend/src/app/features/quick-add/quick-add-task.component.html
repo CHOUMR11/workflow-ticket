@@ -1,0 +1,13 @@
+<div class="quick-add">
+  <input
+    type="text"
+    [(ngModel)]="text"
+    (keyup.enter)="submit()"
+    [disabled]="loading"
+    placeholder="Ex: Renouveler passeport client Ben Ali, urgent, pour vendredi..."
+  />
+  <button (click)="submit()" [disabled]="loading">
+    {{ loading ? 'Création...' : '✨ Créer avec IA' }}
+  </button>
+</div>
+<div class="error" *ngIf="error">{{ error }}</div>

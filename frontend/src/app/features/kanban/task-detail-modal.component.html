@@ -1,0 +1,134 @@
+<div class="overlay" (click)="close()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <input
+        type="text"
+        class="title-input"
+        [ngModel]="task.title"
+        (change)="save('title', $any($event.target).value)"
+      />
+      <button class="close-btn" (click)="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="fields">
+        <label>
+          Description
+          <textarea
+            rows="3"
+            [ngModel]="task.description"
+            (change)="save('description', $any($event.target).value)"
+          ></textarea>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Priorité
+            <select [ngModel]="task.priority" (ngModelChange)="save('priority', $event)">
+              <option value="low">Basse</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+              <option value="urgent">Urgente</option>
+            </select>
+          </label>
+
+          <label>
+            Statut
+            <select [ngModel]="task.status" (ngModelChange)="save('status', $event)">
+              <option value="open">Ouvert</option>
+              <option value="in_progress">En cours</option>
+              <option value="blocked">Bloqué</option>
+              <option value="done">Terminé</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="field-row">
+          <label>
+            Assigné à
+            <select [ngModel]="task.assignee?._id || ''" (ngModelChange)="save('assignee', $event)">
+              <option value="">Non assigné</option>
+              <option *ngFor="let u of users" [value]="u._id">{{ u.name }}</option>
+            </select>
+          </label>
+
+          <label>
+            Échéance
+            <input
+              type="date"
+              [ngModel]="task.dueDate ? (task.dueDate | slice: 0:10) : ''"
+              (change)="save('dueDate', $any($event.target).value)"
+            />
+          </label>
+        </div>
+
+        <label class="progress-field">
+          Avancement : {{ task.progress || 0 }}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            [ngModel]="task.progress || 0"
+            (change)="save('progress', +$any($event.target).value)"
+          />
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="task.progress || 0"></div>
+          </div>
+        </label>
+      </div>
+
+      <div class="ai-block">
+        <button class="ai-btn" (click)="summarize()" [disabled]="summarizing">
+          {{ summarizing ? 'Résumé en cours...' : '✨ Résumer la discussion' }}
+        </button>
+        <p class="ai-summary" *ngIf="aiSummary">{{ aiSummary }}</p>
+      </div>
+
+      <section>
+        <h4>Commentaires</h4>
+        <div class="comment-list">
+          <div class="comment" *ngFor="let c of comments">
+            <strong>{{ c.author.name }}</strong>
+            <span>{{ c.body }}</span>
+            <span class="time">{{ c.createdAt | date: 'short' }}</span>
+          </div>
+          <div class="empty" *ngIf="comments.length === 0">Aucun commentaire.</div>
+        </div>
+        <div class="comment-composer">
+          <input
+            type="text"
+            [(ngModel)]="draftComment"
+            (keyup.enter)="addComment()"
+            placeholder="Ajouter un commentaire..."
+          />
+          <button (click)="addComment()">Envoyer</button>
+        </div>
+      </section>
+
+      <section>
+        <h4>Pièces jointes</h4>
+        <div class="attachment-list">
+          <a *ngFor="let a of attachments" [href]="a.filePath" target="_blank" class="attachment">
+            📎 {{ a.fileName }}
+          </a>
+          <div class="empty" *ngIf="attachments.length === 0">Aucune pièce jointe.</div>
+        </div>
+        <input type="file" (change)="onFileSelected($event)" />
+      </section>
+
+      <section>
+        <h4>Historique</h4>
+        <div class="audit-list">
+          <div class="audit-item" *ngFor="let log of auditLog">
+            <span>{{ log.actor.name }} — {{ log.action }}</span>
+            <span class="time">{{ log.createdAt | date: 'short' }}</span>
+          </div>
+          <div class="empty" *ngIf="auditLog.length === 0">Aucun historique.</div>
+        </div>
+      </section>
+
+      <button class="delete-btn" *ngIf="auth.hasRole('admin')" (click)="remove()">Supprimer la tâche</button>
+    </div>
+  </div>
+</div>

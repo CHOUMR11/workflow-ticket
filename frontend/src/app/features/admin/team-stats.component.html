@@ -1,0 +1,33 @@
+<div class="page">
+  <h2>Statistiques</h2>
+
+  <div class="cards" *ngIf="overview">
+    <div class="card">
+      <div class="card-value">{{ statusCount(overview.tasksByStatus, 'open') }}</div>
+      <div class="card-label">Tâches ouvertes</div>
+    </div>
+    <div class="card">
+      <div class="card-value">{{ statusCount(overview.tasksByStatus, 'done') }}</div>
+      <div class="card-label">Tâches terminées</div>
+    </div>
+    <div class="card overdue">
+      <div class="card-value">{{ overview.overdueCount }}</div>
+      <div class="card-label">Tâches en retard</div>
+    </div>
+    <div class="card">
+      <div class="card-value">{{ statusCount(overview.ticketsByStatus, 'open') }}</div>
+      <div class="card-label">Tickets ouverts</div>
+    </div>
+  </div>
+
+  <h3>Charge de travail par employé</h3>
+  <div class="workload" *ngIf="!loading">
+    <div class="workload-row" *ngFor="let w of workload">
+      <div class="name">{{ w.name }} <span class="role">({{ w.role }})</span></div>
+      <div class="bar-track">
+        <div class="bar" [style.width.%]="(w.openCount / maxLoad()) * 100"></div>
+      </div>
+      <div class="count">{{ w.openCount }}</div>
+    </div>
+  </div>
+</div>

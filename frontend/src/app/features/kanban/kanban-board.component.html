@@ -1,0 +1,110 @@
+<div class="board-page">
+  <app-quick-add-task *ngIf="board" [boardId]="board._id" (created)="loadTasks()"></app-quick-add-task>
+
+  <div class="board-toolbar">
+    <input
+      type="search"
+      class="search"
+      [(ngModel)]="filters.q"
+      (keyup.enter)="loadTasks()"
+      (search)="loadTasks()"
+      placeholder="Rechercher une tâche..."
+    />
+    <select [(ngModel)]="filters.assignee" (ngModelChange)="loadTasks()">
+      <option value="">Tous les assignés</option>
+      <option *ngFor="let u of users" [value]="u._id">{{ u.name }}</option>
+    </select>
+    <select [(ngModel)]="filters.priority" (ngModelChange)="loadTasks()">
+      <option value="">Toutes les priorités</option>
+      <option value="urgent">Urgente</option>
+      <option value="high">Haute</option>
+      <option value="medium">Moyenne</option>
+      <option value="low">Basse</option>
+    </select>
+    <button type="button" class="ghost-btn" (click)="showOnlyMine()">Mes tâches</button>
+    <button type="button" class="ghost-btn" *ngIf="hasActiveFilter" (click)="resetFilters()">Réinitialiser</button>
+    <span class="toolbar-count">{{ totalTasks }} tâche(s)</span>
+  </div>
+
+  <div class="board-layout">
+    <div class="kanban-board" *ngIf="!loading">
+      <div class="kanban-column" *ngFor="let col of columns">
+        <div class="column-header">
+          <span>{{ col.label }}</span>
+          <span class="count">{{ tasksByColumn[col.key].length || 0 }}</span>
+        </div>
+        <div class="column-progress" *ngIf="tasksByColumn[col.key].length">
+          <div class="column-progress-fill" [style.width.%]="columnProgress(col.key)"></div>
+        </div>
+
+        <div
+          class="task-list"
+          cdkDropList
+          [id]="col.key"
+          [cdkDropListData]="tasksByColumn[col.key]"
+          [cdkDropListConnectedTo]="connectedColumnIds()"
+          (cdkDropListDropped)="drop($event, col.key)"
+        >
+          <div class="task-card" *ngFor="let task of tasksByColumn[col.key]" cdkDrag (click)="openTask(task)">
+            <div class="task-card-header">
+              <div class="task-title">{{ task.title }}</div>
+              <button class="open-btn" (click)="$event.stopPropagation(); openTask(task)" title="Voir le détail">⤢</button>
+            </div>
+
+            <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+
+            <div class="task-badges">
+              <span class="badge" [ngClass]="priorityClass(task.priority)">{{ priorityLabel(task.priority) }}</span>
+              <span class="badge status" [ngClass]="'status-' + task.status">{{ statusLabel(task.status) }}</span>
+            </div>
+
+            <div class="task-meta">
+              <span class="assignee" *ngIf="task.assignee; else unassigned">
+                <span class="avatar" [title]="task.assignee.name">{{ initials(task.assignee.name) }}</span>
+                {{ task.assignee.name }}
+              </span>
+              <ng-template #unassigned><span class="assignee muted">Non assigné</span></ng-template>
+
+              <span class="activity">
+                <span *ngIf="task.commentCount" title="Commentaires">💬 {{ task.commentCount }}</span>
+                <span *ngIf="task.attachmentCount" title="Pièces jointes">📎 {{ task.attachmentCount }}</span>
+              </span>
+            </div>
+
+            <div class="due-date" *ngIf="task.dueDate" [ngClass]="dueState(task)">
+              <ng-container [ngSwitch]="dueState(task)">
+                <span *ngSwitchCase="'overdue'">⚠ En retard —</span>
+                <span *ngSwitchCase="'soon'">⏳ Bientôt —</span>
+              </ng-container>
+              Échéance : {{ task.dueDate | date: 'dd/MM/yyyy' }}
+            </div>
+
+            <div class="card-progress" *ngIf="(task.progress || 0) > 0">
+              <div class="card-progress-track">
+                <div class="card-progress-fill" [style.width.%]="task.progress"></div>
+              </div>
+              <span class="card-progress-value">{{ task.progress }}%</span>
+            </div>
+          </div>
+
+          <div class="column-empty" *ngIf="tasksByColumn[col.key].length === 0">Aucune tâche</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading" *ngIf="loading">Chargement du tableau...</div>
+
+    <aside class="board-sidebar">
+      <app-daily-todo></app-daily-todo>
+      <app-my-todo></app-my-todo>
+    </aside>
+  </div>
+
+  <app-task-detail-modal
+    *ngIf="selectedTask"
+    [task]="selectedTask"
+    (closed)="closeTask()"
+    (changed)="loadTasks()"
+    (deleted)="onTaskDeleted()"
+  ></app-task-detail-modal>
+</div>

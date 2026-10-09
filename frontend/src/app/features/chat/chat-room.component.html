@@ -1,0 +1,22 @@
+<div class="chat-room">
+  <div class="messages">
+    <div class="message" *ngFor="let msg of messages" [class.mine]="isMine(msg)">
+      <div class="sender" *ngIf="!isMine(msg)">{{ msg.sender.name }}</div>
+      <div class="bubble">
+        {{ msg.body }}
+        <button class="delete-msg-btn" *ngIf="canDelete(msg)" (click)="remove(msg)">✕</button>
+      </div>
+      <div class="time">{{ msg.createdAt | date: 'shortTime' }}</div>
+    </div>
+  </div>
+
+  <div class="composer">
+    <input
+      type="text"
+      [(ngModel)]="draft"
+      (keyup.enter)="send()"
+      placeholder="Écrire un message..."
+    />
+    <button (click)="send()">Envoyer</button>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="bell-wrapper">
+  <button class="bell-btn" (click)="toggle()">
+    🔔
+    <span class="badge" *ngIf="(unreadCount$ | async) as count">{{ count > 0 ? count : '' }}</span>
+  </button>
+
+  <div class="dropdown" *ngIf="open">
+    <div class="dropdown-header">Notifications</div>
+    <div class="notif-list">
+      <div
+        class="notif-item"
+        *ngFor="let n of notifications$ | async"
+        [class.unread]="!n.read"
+        (click)="markRead(n)"
+      >
+        <div class="message">{{ n.message }}</div>
+        <div class="time">{{ n.createdAt | date: 'short' }}</div>
+      </div>
+      <div class="empty" *ngIf="(notifications$ | async)?.length === 0">Aucune notification</div>
+    </div>
+  </div>
+</div>

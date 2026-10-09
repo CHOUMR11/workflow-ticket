@@ -1,0 +1,33 @@
+<div class="daily-todo">
+  <div class="header">
+    <h3>Ma to-do du jour</h3>
+    <button class="refresh" (click)="refresh()">↻</button>
+  </div>
+
+  <div *ngIf="loading">Génération de la liste...</div>
+
+  <ul class="todo-list" *ngIf="!loading">
+    <li *ngFor="let item of items" class="todo-item">
+      <span class="badge" [ngClass]="priorityClass(item.priority)">{{ item.priority }}</span>
+      <div class="content">
+        <div class="title">{{ item.title }}</div>
+        <div class="reason">{{ item.reason }}</div>
+      </div>
+    </li>
+    <li *ngIf="items.length === 0" class="empty">Rien d'urgent aujourd'hui 🎉</li>
+  </ul>
+
+  <div class="assistant">
+    <input
+      type="text"
+      [(ngModel)]="question"
+      (keyup.enter)="ask()"
+      [disabled]="askingAssistant"
+      placeholder="Demander à l'assistant... ex: ai-je des tickets en retard ?"
+    />
+    <button (click)="ask()" [disabled]="askingAssistant">
+      {{ askingAssistant ? '...' : 'Demander' }}
+    </button>
+  </div>
+  <div class="assistant-reply" *ngIf="assistantReply">{{ assistantReply }}</div>
+</div>

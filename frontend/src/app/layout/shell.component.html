@@ -1,0 +1,36 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo">Vibes Workflow</div>
+    <nav>
+      <a routerLink="/board" routerLinkActive="active">📋 Kanban</a>
+      <a routerLink="/tickets" routerLinkActive="active">🎫 Tickets</a>
+      <a routerLink="/meetings" routerLinkActive="active">📅 Réunions</a>
+      <a routerLink="/chat" routerLinkActive="active">💬 Discussions</a>
+      <a routerLink="/alerts" routerLinkActive="active" class="alert-link">
+        🚨 Alertes
+        <span class="nav-badge" *ngIf="alertCount > 0">{{ alertCount }}</span>
+      </a>
+      <ng-container *ngIf="auth.hasRole('admin')">
+        <div class="nav-divider">Administration</div>
+        <a routerLink="/admin/users" routerLinkActive="active">👤 Utilisateurs</a>
+        <a routerLink="/admin/priorities" routerLinkActive="active">🎯 Priorités</a>
+        <a routerLink="/admin/stats" routerLinkActive="active">📊 Statistiques</a>
+      </ng-container>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="user-info">
+        <span class="name">{{ auth.currentUser?.name }}</span>
+        <span class="role">{{ auth.currentUser?.role }}</span>
+      </div>
+      <app-notification-bell></app-notification-bell>
+      <button class="logout-btn" (click)="logout()">Déconnexion</button>
+    </header>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

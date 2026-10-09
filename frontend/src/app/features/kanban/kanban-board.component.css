@@ -1,0 +1,275 @@
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  background: #f4f5f7;
+  border-radius: 8px;
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  font-weight: 600;
+}
+
+.task-list {
+  min-height: 200px;
+  padding: 8px;
+  flex: 1;
+}
+
+.task-card {
+  background: white;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  cursor: grab;
+}
+
+.task-title {
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.task-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #555;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+}
+
+.priority-low { background: #6b7280; }
+.priority-medium { background: #2563eb; }
+.priority-high { background: #d97706; }
+.priority-urgent { background: #dc2626; }
+
+.due-date {
+  font-size: 11px;
+  color: #888;
+  margin-top: 6px;
+}
+
+.board-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.board-layout .kanban-board {
+  flex: 1;
+  padding: 0 16px 16px;
+}
+
+.board-sidebar {
+  width: 360px;
+  flex-shrink: 0;
+  padding: 16px 16px 16px 0;
+}
+
+.card-progress-track {
+  height: 4px;
+  background: #f3f4f6;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.card-progress-fill {
+  height: 100%;
+  background: #16a34a;
+}
+
+.task-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.open-btn {
+  border: none;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.open-btn:hover {
+  color: #2563eb;
+}
+
+.board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+
+.board-toolbar .search {
+  flex: 1;
+  min-width: 200px;
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.board-toolbar select {
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+}
+
+.ghost-btn {
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+
+.ghost-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.toolbar-count {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.column-progress {
+  height: 3px;
+  margin: 0 12px 8px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.column-progress-fill {
+  height: 100%;
+  background: #16a34a;
+}
+
+.task-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.task-desc {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: #6b7280;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.badge.status {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.badge.status-in_progress { background: #dbeafe; color: #1d4ed8; }
+.badge.status-blocked { background: #fee2e2; color: #b91c1c; }
+.badge.status-done { background: #dcfce7; color: #15803d; }
+
+.task-meta {
+  align-items: center;
+  gap: 6px;
+}
+
+.assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assignee.muted {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.activity {
+  display: inline-flex;
+  gap: 6px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.due-date.soon { color: #b45309; font-weight: 600; }
+.due-date.overdue { color: #b91c1c; font-weight: 600; }
+
+.card-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.card-progress .card-progress-track {
+  flex: 1;
+  margin-top: 0;
+}
+
+.card-progress-value {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.column-empty {
+  padding: 12px;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.loading {
+  padding: 24px;
+  color: #6b7280;
+}

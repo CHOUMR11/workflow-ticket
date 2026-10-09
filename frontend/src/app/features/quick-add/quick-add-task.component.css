@@ -1,0 +1,33 @@
+.quick-add {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.quick-add input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+}
+
+.quick-add button {
+  padding: 10px 16px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quick-add button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 13px;
+  padding: 0 16px 8px;
+}

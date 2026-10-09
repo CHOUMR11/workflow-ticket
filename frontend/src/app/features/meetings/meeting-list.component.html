@@ -1,0 +1,48 @@
+<div class="page">
+  <div class="page-header">
+    <h2>Réunions</h2>
+    <button (click)="showForm = !showForm">{{ showForm ? 'Annuler' : '+ Nouvelle réunion' }}</button>
+  </div>
+
+  <form class="meeting-form" *ngIf="showForm" (ngSubmit)="submit()">
+    <input type="text" [(ngModel)]="draft.title" name="title" placeholder="Titre" required />
+    <textarea [(ngModel)]="draft.description" name="description" placeholder="Description" rows="2"></textarea>
+    <div class="row">
+      <label>Début <input type="datetime-local" [(ngModel)]="draft.startTime" name="startTime" required /></label>
+      <label>Fin <input type="datetime-local" [(ngModel)]="draft.endTime" name="endTime" required /></label>
+    </div>
+    <input type="text" [(ngModel)]="draft.videoLink" name="videoLink" placeholder="Lien visio (optionnel)" />
+    <label>Participants</label>
+    <select multiple [(ngModel)]="draft.participantIds" name="participantIds" class="multiselect">
+      <option *ngFor="let u of users" [value]="u._id">{{ u.name }} ({{ u.role }})</option>
+    </select>
+    <button type="submit" [disabled]="submitting">{{ submitting ? 'Création...' : 'Planifier' }}</button>
+  </form>
+
+  <div *ngIf="loading">Chargement...</div>
+
+  <div class="meeting-list" *ngIf="!loading">
+    <div class="meeting-card" *ngFor="let m of meetings">
+      <div class="meeting-header">
+        <h3>{{ m.title }}</h3>
+        <span class="status">{{ m.status }}</span>
+      </div>
+      <div class="time">{{ m.startTime | date: 'medium' }} → {{ m.endTime | date: 'shortTime' }}</div>
+      <p class="desc" *ngIf="m.description">{{ m.description }}</p>
+      <a *ngIf="m.videoLink" [href]="m.videoLink" target="_blank" class="video-link">🔗 Rejoindre la visio</a>
+
+      <div class="ai-summary" *ngIf="m.aiSummary">
+        <strong>Résumé IA :</strong> {{ m.aiSummary }}
+        <ul *ngIf="m.aiActionItems?.length">
+          <li *ngFor="let item of m.aiActionItems">{{ item }}</li>
+        </ul>
+      </div>
+
+      <button class="summarize-btn" (click)="summarize(m)" [disabled]="summarizingId === m._id">
+        {{ summarizingId === m._id ? 'Résumé en cours...' : '✨ Résumer avec IA' }}
+      </button>
+      <button class="delete-meeting-btn" *ngIf="auth.hasRole('admin')" (click)="remove(m)">Supprimer</button>
+    </div>
+    <div *ngIf="meetings.length === 0" class="empty">Aucune réunion planifiée.</div>
+  </div>
+</div>

@@ -1,0 +1,248 @@
+<div class="overlay" (click)="close()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="ticket-ref-badge" *ngIf="ticket.ticketRef">{{ ticket.ticketRef }}</span>
+      <input
+        type="text"
+        class="title-input"
+        [ngModel]="ticket.subject"
+        (change)="save('subject', $any($event.target).value)"
+        [disabled]="!auth.hasRole('admin')"
+      />
+      <button class="close-btn" (click)="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="fields">
+        <label>
+          Description
+          <textarea
+            rows="3"
+            [ngModel]="ticket.description"
+            (change)="save('description', $any($event.target).value)"
+            [disabled]="!auth.hasRole('admin')"
+          ></textarea>
+        </label>
+
+        <div class="field-row">
+          <label>
+            Priorité
+            <select [ngModel]="ticket.priority" (ngModelChange)="save('priority', $event)" [disabled]="!auth.hasRole('admin')">
+              <option value="low">Basse</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+              <option value="urgent">Urgente</option>
+            </select>
+          </label>
+
+          <label>
+            Statut
+            <select [ngModel]="ticket.status" (ngModelChange)="save('status', $event)" [disabled]="!auth.hasRole('admin')">
+              <option value="open">Ouvert</option>
+              <option value="pending">En attente</option>
+              <option value="resolved">Résolu</option>
+              <option value="closed">Fermé</option>
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Assigné à
+          <div class="assignee-row">
+            <select [ngModel]="ticket.assignee?._id || ''" (ngModelChange)="onAssigneeChange($event)">
+              <option value="" [disabled]="!auth.hasRole('admin')">Non assigné</option>
+              <option
+                *ngFor="let u of users"
+                [value]="u._id"
+                [disabled]="!auth.hasRole('admin') && u._id !== auth.currentUser?._id"
+              >
+                {{ u.name }}
+              </option>
+            </select>
+            <button type="button" class="claim-btn" *ngIf="canClaim()" (click)="claim()">
+              🙋 Prendre ce ticket
+            </button>
+          </div>
+          <p class="hint" *ngIf="!auth.hasRole('admin')">Vous ne pouvez vous assigner ce ticket qu'à vous-même.</p>
+        </label>
+
+        <label class="progress-field">
+          Avancement : {{ ticket.progress || 0 }}%
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            [ngModel]="ticket.progress || 0"
+            (change)="save('progress', +$any($event.target).value)"
+            [disabled]="!auth.hasRole('admin')"
+          />
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="ticket.progress || 0"></div>
+          </div>
+        </label>
+      </div>
+
+
+      <section class="commercial">
+        <h4>Commercial</h4>
+        <p class="created-by">Créé par <strong>{{ ticket.requester.name }}</strong> le {{ ticket.createdAt | date: 'medium' }}</p>
+
+        <div class="sync-bar" *ngIf="auth.hasRole('admin')">
+          <button class="sync-btn" (click)="syncNow()" [disabled]="syncing">
+            {{ syncing ? 'Synchronisation...' : '🔄 Synchroniser avec le système de gestion' }}
+          </button>
+          <span class="sync-message" *ngIf="syncMessage">{{ syncMessage }}</span>
+        </div>
+
+        <label>
+          Partenaire (client / fournisseur)
+          <select [ngModel]="ticket.partner?._id || ''" (ngModelChange)="save('partner', $event)" [disabled]="!auth.hasRole('admin')">
+            <option value="">Aucun</option>
+            <option *ngFor="let p of partners" [value]="p._id">{{ p.name }} ({{ p.type }})</option>
+          </select>
+        </label>
+
+        <label *ngIf="ticket.partner && auth.hasRole('admin')">
+          ID du partenaire dans le système de gestion
+          <input type="text" [ngModel]="ticket.partner.externalId || ''" (change)="savePartnerExternalId($any($event.target).value)" />
+        </label>
+
+        <div class="block">
+          <div class="block-title">Devis</div>
+          <div class="field-row">
+            <label>Référence
+              <input type="text" [ngModel]="ticket.devis?.reference" (change)="saveNested('devis', 'reference', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+            <label>Montant
+              <input type="number" [ngModel]="ticket.devis?.amount" (change)="saveNested('devis', 'amount', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+          </div>
+          <label>ID dans le système de gestion
+            <input type="text" [ngModel]="ticket.devis?.externalId || ''" (change)="saveNested('devis', 'externalId', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+          </label>
+        </div>
+
+        <div class="block" [class.overdue]="paymentState(ticket.saleInvoice) === 'overdue'" [class.soon]="paymentState(ticket.saleInvoice) === 'soon'">
+          <div class="block-title">
+            Facture de vente
+            <span class="alert-badge overdue" *ngIf="paymentState(ticket.saleInvoice) === 'overdue'">En retard</span>
+            <span class="alert-badge soon" *ngIf="paymentState(ticket.saleInvoice) === 'soon'">Échéance proche</span>
+          </div>
+          <div class="field-row">
+            <label>Référence
+              <input type="text" [ngModel]="ticket.saleInvoice?.reference" (change)="saveNested('saleInvoice', 'reference', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+            <label>Montant
+              <input type="number" [ngModel]="ticket.saleInvoice?.amount" (change)="saveNested('saleInvoice', 'amount', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Échéance
+              <input type="date" [ngModel]="dateValue(ticket.saleInvoice?.dueDate)" (change)="saveNested('saleInvoice', 'dueDate', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+            <label>Statut
+              <select [ngModel]="ticket.saleInvoice?.status || ''" (ngModelChange)="saveNested('saleInvoice', 'status', $event)" [disabled]="!auth.hasRole('admin')">
+                <option value="">—</option>
+                <option value="unpaid">Impayée</option>
+                <option value="partial">Partielle</option>
+                <option value="paid">Payée</option>
+              </select>
+            </label>
+          </div>
+          <label>ID dans le système de gestion
+            <input type="text" [ngModel]="ticket.saleInvoice?.externalId || ''" (change)="saveNested('saleInvoice', 'externalId', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+          </label>
+        </div>
+
+        <div class="block" [class.overdue]="paymentState(ticket.purchaseInvoice) === 'overdue'" [class.soon]="paymentState(ticket.purchaseInvoice) === 'soon'">
+          <div class="block-title">
+            Facture d'achat
+            <span class="alert-badge overdue" *ngIf="paymentState(ticket.purchaseInvoice) === 'overdue'">En retard</span>
+            <span class="alert-badge soon" *ngIf="paymentState(ticket.purchaseInvoice) === 'soon'">Échéance proche</span>
+          </div>
+          <div class="field-row">
+            <label>Référence
+              <input type="text" [ngModel]="ticket.purchaseInvoice?.reference" (change)="saveNested('purchaseInvoice', 'reference', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+            <label>Montant
+              <input type="number" [ngModel]="ticket.purchaseInvoice?.amount" (change)="saveNested('purchaseInvoice', 'amount', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+          </div>
+          <div class="field-row">
+            <label>Échéance
+              <input type="date" [ngModel]="dateValue(ticket.purchaseInvoice?.dueDate)" (change)="saveNested('purchaseInvoice', 'dueDate', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+            </label>
+            <label>Statut
+              <select [ngModel]="ticket.purchaseInvoice?.status || ''" (ngModelChange)="saveNested('purchaseInvoice', 'status', $event)" [disabled]="!auth.hasRole('admin')">
+                <option value="">—</option>
+                <option value="unpaid">Impayée</option>
+                <option value="partial">Partielle</option>
+                <option value="paid">Payée</option>
+              </select>
+            </label>
+          </div>
+          <label>ID dans le système de gestion
+            <input type="text" [ngModel]="ticket.purchaseInvoice?.externalId || ''" (change)="saveNested('purchaseInvoice', 'externalId', $any($event.target).value)" [disabled]="!auth.hasRole('admin')" />
+          </label>
+        </div>
+      </section>
+
+      <section>
+        <h4>Notes</h4>
+        <div class="note-list">
+          <div class="note" *ngFor="let n of notes">
+            <div class="note-header">
+              <strong>{{ n.author.name }}</strong>
+              <span class="vis-badge internal" *ngIf="n.visibility === 'internal'">Interne</span>
+              <span class="vis-badge team" *ngIf="n.visibility !== 'internal'">Équipe</span>
+              <span class="sync-ok" *ngIf="n.syncedAt" title="Envoyée au système de gestion">✓ envoyée</span>
+              <span class="time">{{ n.createdAt | date: 'short' }}</span>
+              <button class="delete-note-btn" *ngIf="canDeleteNote(n)" (click)="deleteNote(n._id)">✕</button>
+            </div>
+            <span>{{ n.body }}</span>
+          </div>
+          <div class="empty" *ngIf="notes.length === 0">Aucune note.</div>
+        </div>
+        <div class="note-composer">
+          <select [(ngModel)]="draftVisibility" class="vis-select" title="Qui peut voir cette note">
+            <option value="team">Équipe VIBES TRIP</option>
+            <option value="internal">Interne (moi + admin)</option>
+          </select>
+          <input
+            type="text"
+            [(ngModel)]="draftNote"
+            (keyup.enter)="addNote()"
+            placeholder="Ajouter une note..."
+          />
+          <button (click)="addNote()">Envoyer</button>
+        </div>
+      </section>
+
+      <section>
+        <h4>Pièces jointes</h4>
+        <div class="attachment-list">
+          <div class="attachment-row" *ngFor="let a of attachments">
+            <a [href]="a.filePath" target="_blank">📎 {{ a.fileName }}</a>
+            <button (click)="deleteAttachment(a._id)">✕</button>
+          </div>
+          <div class="empty" *ngIf="attachments.length === 0">Aucune pièce jointe.</div>
+        </div>
+        <input type="file" (change)="onFileSelected($event)" />
+      </section>
+
+      <section>
+        <h4>Historique</h4>
+        <div class="audit-list">
+          <div class="audit-item" *ngFor="let log of auditLog">
+            <span>{{ log.actor.name }} — {{ log.action }}</span>
+            <span class="time">{{ log.createdAt | date: 'short' }}</span>
+          </div>
+          <div class="empty" *ngIf="auditLog.length === 0">Aucun historique.</div>
+        </div>
+      </section>
+
+      <button class="delete-btn" *ngIf="auth.hasRole('admin')" (click)="remove()">Supprimer le ticket</button>
+    </div>
+  </div>
+</div>

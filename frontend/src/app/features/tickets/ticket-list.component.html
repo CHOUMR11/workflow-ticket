@@ -1,0 +1,257 @@
+<div class="page">
+  <div class="page-header">
+    <h2>Tickets</h2>
+    <div class="header-actions">
+      <div class="view-switch">
+        <button type="button" [class.active]="view === 'list'" (click)="setView('list')">☰ Liste</button>
+        <button type="button" [class.active]="view === 'kanban'" (click)="setView('kanban')">▤ Kanban</button>
+      </div>
+      <button
+        type="button"
+        class="alert-toggle"
+        [class.danger]="payments && payments.overdue > 0"
+        [class.warn]="payments && payments.overdue === 0 && payments.total > 0"
+        (click)="togglePayments()"
+      >
+        🔔 Alertes paiement
+        <span class="alert-badge" *ngIf="payments && payments.total > 0">{{ payments.total }}</span>
+      </button>
+      <button
+        class="alert-check-btn"
+        *ngIf="auth.hasRole('admin') || auth.hasRole('accounting')"
+        [disabled]="checkingPayments"
+        (click)="runPaymentCheck()"
+      >
+        {{ checkingPayments ? 'Vérification...' : 'Notifier les impayés' }}
+      </button>
+      <button (click)="showForm = !showForm">{{ showForm ? 'Annuler' : '+ Nouveau ticket' }}</button>
+    </div>
+  </div>
+  <div class="alert-message" *ngIf="alertMessage">{{ alertMessage }}</div>
+
+  <div class="payment-panel" *ngIf="showPayments && payments">
+    <div class="payment-summary">
+      <span class="pill overdue">{{ payments.overdue }} en retard</span>
+      <span class="pill soon">{{ payments.dueSoon }} à échéance ({{ payments.windowDays }} j)</span>
+      <span class="pill total">{{ payments.totalAmount | number: '1.0-2' }} DT en jeu</span>
+      <button type="button" class="ghost-btn" (click)="loadPaymentAlerts()">↻ Actualiser</button>
+    </div>
+
+    <p class="payment-empty" *ngIf="payments.alerts.length === 0">Aucune facture en retard ou proche de l'échéance 🎉</p>
+
+    <ul class="payment-list" *ngIf="payments.alerts.length > 0">
+      <li *ngFor="let a of payments.alerts" [ngClass]="a.severity" (click)="openAlert(a)">
+        <span class="pay-state">{{ a.severity === 'overdue' ? '⚠' : '⏳' }} {{ alertLabel(a) }}</span>
+        <span class="pay-ref">{{ a.ticketRef }} · {{ kindLabel(a.kind) }} {{ a.reference || '—' }}</span>
+        <span class="pay-subject">{{ a.subject }}</span>
+        <span class="pay-partner" *ngIf="a.partner">🏢 {{ a.partner.name }}</span>
+        <span class="pay-amount" *ngIf="a.amount !== null">{{ a.amount | number: '1.0-2' }} DT · {{ a.status }}</span>
+        <span class="pay-due">Échéance {{ a.dueDate | date: 'dd/MM/yyyy' }}</span>
+        <span class="pay-owner" *ngIf="a.assignee">{{ a.assignee.name }}</span>
+        <span class="pay-sent" *ngIf="a.alertSentAt">notifié le {{ a.alertSentAt | date: 'dd/MM HH:mm' }}</span>
+        <span class="pay-sent muted" *ngIf="!a.alertSentAt">non notifié</span>
+      </li>
+    </ul>
+  </div>
+
+  <form class="ticket-form" *ngIf="showForm" (ngSubmit)="submit()">
+    <input type="text" [(ngModel)]="draft.subject" name="subject" placeholder="Sujet du ticket" required />
+    <textarea [(ngModel)]="draft.description" name="description" placeholder="Description" rows="3"></textarea>
+    <select [(ngModel)]="draft.partner" name="partner">
+      <option value="">Partenaire (client / fournisseur) — optionnel</option>
+      <option *ngFor="let p of partners" [value]="p._id">{{ p.name }} ({{ p.type }})</option>
+    </select>
+    <select [(ngModel)]="draft.assignee" name="assignee">
+      <option value="">Assigner à... (optionnel)</option>
+      <option
+        *ngFor="let u of users"
+        [value]="u._id"
+        [disabled]="!auth.hasRole('admin') && u._id !== auth.currentUser?._id"
+      >
+        {{ u.name }} ({{ u.role }})
+      </option>
+    </select>
+    <p class="hint">La priorité est déterminée automatiquement par l'IA d'après le texte.</p>
+    <button type="submit" [disabled]="submitting">{{ submitting ? 'Création...' : 'Créer le ticket' }}</button>
+  </form>
+
+  <div class="toolbar">
+    <input
+      type="search"
+      class="search"
+      [(ngModel)]="filters.q"
+      (keyup.enter)="applyFilters()"
+      (search)="applyFilters()"
+      placeholder="Rechercher (sujet, n°, référence devis/facture)..."
+    />
+    <select [(ngModel)]="filters.status" (ngModelChange)="applyFilters()">
+      <option value="">Tous les statuts</option>
+      <option *ngFor="let c of statusColumns" [value]="c.key">{{ c.label }}</option>
+    </select>
+    <select [(ngModel)]="filters.priority" (ngModelChange)="applyFilters()">
+      <option value="">Toutes les priorités</option>
+      <option value="urgent">Urgente</option>
+      <option value="high">Haute</option>
+      <option value="medium">Moyenne</option>
+      <option value="low">Basse</option>
+    </select>
+    <select [(ngModel)]="filters.assignee" (ngModelChange)="applyFilters()">
+      <option value="">Tous les assignés</option>
+      <option *ngFor="let u of users" [value]="u._id">{{ u.name }}</option>
+    </select>
+    <select [(ngModel)]="filters.partner" (ngModelChange)="applyFilters()">
+      <option value="">Tous les partenaires</option>
+      <option *ngFor="let p of partners" [value]="p._id">{{ p.name }}</option>
+    </select>
+    <button type="button" class="ghost-btn" (click)="showOnlyMine()">Mes tickets</button>
+    <button type="button" class="ghost-btn" *ngIf="hasActiveFilter" (click)="resetFilters()">Réinitialiser</button>
+    <span class="toolbar-count">{{ total }} ticket(s)</span>
+  </div>
+
+  <div *ngIf="loading">Chargement...</div>
+
+  <table class="ticket-table" *ngIf="!loading && view === 'list'">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Sujet</th>
+        <th>Priorité</th>
+        <th>Avancement</th>
+        <th>Partenaire</th>
+        <th>Devis / Factures</th>
+        <th>Créé le</th>
+        <th>Créé par</th>
+        <th>Assigné à</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of tickets" (click)="openTicket(t)" class="clickable-row">
+        <td class="ticket-ref">{{ t.ticketRef || '—' }}</td>
+        <td>
+          <div class="subject">
+            {{ t.subject }}
+            <span class="pay-alert" *ngIf="hasPaymentAlert(t)" title="Paiement à surveiller">💰</span>
+          </div>
+          <div class="sub-line">
+            <span *ngIf="t.commentCount" title="Commentaires">💬 {{ t.commentCount }}</span>
+            <span *ngIf="t.attachmentCount" title="Pièces jointes">📎 {{ t.attachmentCount }}</span>
+            <span class="desc" *ngIf="t.description">{{ t.description }}</span>
+          </div>
+        </td>
+        <td><span class="badge" [ngClass]="priorityClass(t.priority)">{{ priorityLabel(t.priority) }}</span></td>
+        <td>
+          <div class="progress-cell">
+            <div class="progress-track"><div class="progress-fill" [style.width.%]="t.progress || 0"></div></div>
+            <span>{{ t.progress || 0 }}%</span>
+          </div>
+        </td>
+        <td>
+          <span *ngIf="t.partner; else noPartner">
+            {{ t.partner.name }}
+            <span class="partner-type">{{ t.partner.type }}</span>
+          </span>
+          <ng-template #noPartner>—</ng-template>
+        </td>
+        <td class="finance-cell">
+          <span class="chip devis" *ngIf="t.devis?.reference" title="Devis">📄 {{ t.devis?.reference }}</span>
+          <span
+            class="chip invoice"
+            *ngIf="t.saleInvoice?.reference"
+            [ngClass]="invoiceState(t)"
+            title="Facture de vente"
+          >🧾 {{ t.saleInvoice?.reference }} · {{ t.saleInvoice?.status || 'n/a' }}</span>
+          <span
+            class="chip invoice"
+            *ngIf="t.purchaseInvoice?.reference"
+            [ngClass]="invoiceState(t)"
+            title="Facture d'achat"
+          >🏷 {{ t.purchaseInvoice?.reference }} · {{ t.purchaseInvoice?.status || 'n/a' }}</span>
+          <span class="amount" *ngIf="ticketAmount(t) !== null">{{ ticketAmount(t) | number: '1.0-2' }} DT</span>
+          <span *ngIf="!t.devis?.reference && !t.saleInvoice?.reference && !t.purchaseInvoice?.reference">—</span>
+        </td>
+        <td class="date-cell">{{ t.createdAt | date: 'dd/MM/yyyy' }}</td>
+        <td>{{ t.requester.name }}</td>
+        <td>
+          <span class="assignee" *ngIf="t.assignee; else unassigned">
+            <span class="avatar">{{ initials(t.assignee.name) }}</span> {{ t.assignee.name }}
+          </span>
+          <ng-template #unassigned><span class="muted">Non assigné</span></ng-template>
+          <button class="claim-btn" *ngIf="canClaim(t)" (click)="claim(t, $event)" title="Prendre ce ticket pour moi-même">
+            🙋 Prendre
+          </button>
+        </td>
+        <td (click)="$event.stopPropagation()">
+          <select [ngModel]="t.status" (ngModelChange)="updateStatus(t, $event)" [disabled]="!canEdit(t)">
+            <option value="open">Ouvert</option>
+            <option value="pending">En attente</option>
+            <option value="resolved">Résolu</option>
+            <option value="closed">Fermé</option>
+          </select>
+        </td>
+      </tr>
+      <tr *ngIf="tickets.length === 0">
+        <td colspan="10" class="empty-row">Aucun ticket ne correspond aux filtres.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="ticket-kanban" *ngIf="!loading && view === 'kanban'">
+    <div class="ticket-column" *ngFor="let col of statusColumns">
+      <div class="column-header">
+        <span>{{ col.label }}</span>
+        <span class="count">{{ ticketsByStatus[col.key].length }}</span>
+      </div>
+      <div
+        class="ticket-drop"
+        cdkDropList
+        [id]="'ticket-' + col.key"
+        [cdkDropListData]="ticketsByStatus[col.key]"
+        [cdkDropListConnectedTo]="connectedStatusIds()"
+        (cdkDropListDropped)="drop($event, col.key)"
+      >
+        <div class="ticket-card" *ngFor="let t of ticketsByStatus[col.key]" cdkDrag (click)="openTicket(t)">
+          <div class="card-top">
+            <span class="ticket-ref">{{ t.ticketRef || '—' }}</span>
+            <span class="badge" [ngClass]="priorityClass(t.priority)">{{ priorityLabel(t.priority) }}</span>
+          </div>
+          <div class="card-subject">{{ t.subject }}</div>
+          <div class="card-partner" *ngIf="t.partner">🏢 {{ t.partner.name }}</div>
+          <div class="card-finance" *ngIf="ticketAmount(t) !== null" [ngClass]="invoiceState(t)">
+            💰 {{ ticketAmount(t) | number: '1.0-2' }} DT
+            <span *ngIf="t.saleInvoice?.dueDate">· échéance {{ t.saleInvoice?.dueDate | date: 'dd/MM' }}</span>
+          </div>
+          <div class="card-bottom">
+            <span class="assignee" *ngIf="t.assignee">
+              <span class="avatar">{{ initials(t.assignee.name) }}</span> {{ t.assignee.name }}
+            </span>
+            <button class="claim-btn" *ngIf="canClaim(t)" (click)="claim(t, $event)" title="Prendre ce ticket pour moi-même">
+              🙋
+            </button>
+            <span class="activity">
+              <span *ngIf="t.commentCount">💬 {{ t.commentCount }}</span>
+              <span *ngIf="t.attachmentCount">📎 {{ t.attachmentCount }}</span>
+              <span>{{ t.progress || 0 }}%</span>
+            </span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" [style.width.%]="t.progress || 0"></div></div>
+        </div>
+        <div class="column-empty" *ngIf="ticketsByStatus[col.key].length === 0">Aucun ticket</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagination" *ngIf="!loading && view === 'list' && pages > 1">
+    <button (click)="goToPage(page - 1)" [disabled]="page === 1">← Précédent</button>
+    <span>Page {{ page }} / {{ pages }} ({{ total }} tickets)</span>
+    <button (click)="goToPage(page + 1)" [disabled]="page === pages">Suivant →</button>
+  </div>
+
+  <app-ticket-detail-modal
+    *ngIf="selectedTicket"
+    [ticket]="selectedTicket"
+    (closed)="closeTicket()"
+    (changed)="load()"
+    (deleted)="onTicketDeleted()"
+  ></app-ticket-detail-modal>
+</div>

@@ -1,0 +1,27 @@
+<div class="page">
+  <h2>Priorités par employé</h2>
+  <p class="hint">Choisissez un employé, puis glissez-déposez ses tâches pour définir l'ordre dans lequel il doit les traiter.</p>
+
+  <select [(ngModel)]="selectedUserId" (ngModelChange)="onUserChange()" class="user-select">
+    <option value="">Sélectionner un employé...</option>
+    <option *ngFor="let u of users" [value]="u._id">{{ u.name }} ({{ u.role }})</option>
+  </select>
+
+  <div *ngIf="loading">Chargement...</div>
+
+  <div class="priority-list" cdkDropList (cdkDropListDropped)="drop($event)" *ngIf="!loading && selectedUserId">
+    <div class="priority-item" *ngFor="let task of tasks; let i = index" cdkDrag>
+      <span class="rank">{{ i + 1 }}</span>
+      <div class="content">
+        <div class="title">{{ task.title }}</div>
+        <div class="meta">
+          <span class="badge" [ngClass]="priorityClass(task.priority)">{{ task.priority }}</span>
+          <span class="due" *ngIf="task.dueDate">Échéance : {{ task.dueDate | date: 'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="empty" *ngIf="tasks.length === 0">Aucune tâche ouverte pour cet employé.</div>
+  </div>
+
+  <div class="saving-indicator" *ngIf="saving">Enregistrement...</div>
+</div>

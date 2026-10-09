@@ -1,0 +1,23 @@
+<div class="my-todo">
+  <div class="header">
+    <h3>Ma to-do</h3>
+  </div>
+
+  <div class="composer">
+    <input type="text" [(ngModel)]="draft" (keyup.enter)="add()" placeholder="Nouvelle tâche..." />
+    <input type="date" [(ngModel)]="draftDueDate" title="Échéance (optionnel)" />
+    <button (click)="add()">Ajouter</button>
+  </div>
+
+  <div *ngIf="loading">Chargement...</div>
+
+  <ul class="todo-list" *ngIf="!loading">
+    <li *ngFor="let t of todos" [class.done]="t.done" [class.overdue]="isOverdue(t)">
+      <input type="checkbox" [checked]="t.done" (change)="toggle(t)" />
+      <span class="text">{{ t.text }}</span>
+      <span class="due" *ngIf="t.dueDate">{{ t.dueDate | date: 'shortDate' }}</span>
+      <button class="remove-btn" (click)="remove(t)">✕</button>
+    </li>
+    <li class="empty" *ngIf="todos.length === 0">Rien à faire pour l'instant.</li>
+  </ul>
+</div>

@@ -1,0 +1,108 @@
+.shell {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #111827;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 16px;
+  padding: 0 20px 16px;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+}
+
+nav a {
+  color: #d1d5db;
+  text-decoration: none;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+nav a.active,
+nav a:hover {
+  background: #1f2937;
+  color: white;
+}
+
+.nav-divider {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #6b7280;
+  padding: 16px 20px 4px;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 12px 20px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.user-info {
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-info .name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.user-info .role {
+  font-size: 11px;
+  color: #9ca3af;
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.alert-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-badge {
+  background: #dc2626;
+  color: white;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+}

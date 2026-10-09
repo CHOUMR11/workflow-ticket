@@ -1,0 +1,64 @@
+<div class="page">
+  <div class="page-header">
+    <h2>🚨 Centre d'alertes</h2>
+    <span class="total-badge" *ngIf="data">{{ data.total }} alerte(s)</span>
+  </div>
+
+  <div *ngIf="loading">Chargement...</div>
+
+  <ng-container *ngIf="!loading && data">
+    <section class="alert-section" *ngIf="data.payment.alerts.length">
+      <h3>💰 Paiements ({{ data.payment.total }})</h3>
+      <div class="alert-card" *ngFor="let a of data.payment.alerts" [class.overdue]="a.severity === 'overdue'" (click)="openTicket(a.ticketId)">
+        <div class="alert-main">
+          <strong>{{ a.ticketRef }}</strong> — {{ a.subject }}
+          <span class="tag" [class.overdue]="a.severity === 'overdue'">
+            {{ a.severity === 'overdue' ? 'En retard' : 'Échéance proche' }}
+          </span>
+        </div>
+        <div class="alert-meta">
+          Facture {{ a.kind === 'sale' ? 'de vente' : "d'achat" }} {{ a.reference }} — {{ a.amount ?? '?' }} DT
+          — {{ a.partner?.name || 'partenaire inconnu' }}
+          — {{ a.severity === 'overdue' ? (-a.daysLeft) + ' j de retard' : a.daysLeft + ' j restants' }}
+        </div>
+      </div>
+    </section>
+
+    <section class="alert-section" *ngIf="data.vouchers.alerts.length">
+      <h3>📄 Vouchers / billets ({{ data.vouchers.total }})</h3>
+      <div class="alert-card overdue" *ngFor="let v of data.vouchers.alerts">
+        <div class="alert-main" (click)="openTicket(v.ticketId)">
+          <strong>{{ v.ticketRef }}</strong> — {{ v.subject }}
+          <span class="tag overdue">{{ v.hoursOverdue }}h après échéance</span>
+        </div>
+        <div class="alert-meta">
+          {{ v.partner?.name || 'partenaire inconnu' }} — assigné : {{ v.assignee?.name || '—' }}
+        </div>
+        <div class="extend-row">
+          <button (click)="extendVoucher(v.ticketId, 24)" [disabled]="extendingId === v.ticketId">+24h</button>
+          <button (click)="extendVoucher(v.ticketId, 48)" [disabled]="extendingId === v.ticketId">+48h</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="alert-section" *ngIf="data.overdueTasks.length">
+      <h3>📋 Tâches en retard ({{ data.overdueTasks.length }})</h3>
+      <div class="alert-card overdue" *ngFor="let t of data.overdueTasks">
+        <div class="alert-main">{{ t.title }}</div>
+        <div class="alert-meta">
+          Échéance : {{ t.dueDate | date: 'mediumDate' }} — {{ t.assignee?.name || 'non assigné' }}
+        </div>
+      </div>
+    </section>
+
+    <section class="alert-section" *ngIf="data.overdueTodos.length">
+      <h3>✅ To-do en retard ({{ data.overdueTodos.length }})</h3>
+      <div class="alert-card overdue" *ngFor="let td of data.overdueTodos">
+        <div class="alert-main">{{ td.text }}</div>
+        <div class="alert-meta">Échéance : {{ td.dueDate | date: 'mediumDate' }}</div>
+      </div>
+    </section>
+
+    <p class="empty" *ngIf="data.total === 0">Aucune alerte en ce moment 🎉</p>
+  </ng-container>
+</div>

@@ -1,0 +1,32 @@
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  background: #111827;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+.call-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  color: white;
+  font-size: 14px;
+}
+
+.call-header button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.call-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+}

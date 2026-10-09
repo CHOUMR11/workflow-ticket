@@ -1,0 +1,46 @@
+<div class="chat-page">
+  <aside class="room-sidebar">
+    <div class="sidebar-header">
+      <span>Rooms</span>
+      <button (click)="showForm = !showForm">+</button>
+    </div>
+
+    <form class="room-form" *ngIf="showForm" (ngSubmit)="createRoom()">
+      <input type="text" [(ngModel)]="draft.name" name="name" placeholder="Nom de la room" required />
+      <select multiple [(ngModel)]="draft.memberIds" name="memberIds">
+        <option *ngFor="let u of users" [value]="u._id">{{ u.name }}</option>
+      </select>
+      <button type="submit">Créer</button>
+    </form>
+
+    <div class="room-item" *ngFor="let room of rooms" [class.active]="room._id === activeRoomId" (click)="selectRoom(room._id)">
+      {{ room.name }}
+    </div>
+    <div class="empty" *ngIf="rooms.length === 0">Aucune room. Créez-en une.</div>
+  </aside>
+
+  <div class="chat-panel" *ngIf="activeRoomId">
+    <div class="chat-toolbar">
+      <button (click)="startCall('video')">🎥 Appel vidéo</button>
+      <button (click)="startCall('audio')">🎙️ Appel vocal</button>
+      <button (click)="showAddMember = !showAddMember">👤 Ajouter une personne</button>
+    </div>
+
+    <div class="add-member-bar" *ngIf="showAddMember">
+      <select [(ngModel)]="memberToAdd">
+        <option value="">Choisir une personne...</option>
+        <option *ngFor="let u of availableToAdd" [value]="u._id">{{ u.name }} ({{ u.role }})</option>
+      </select>
+      <button (click)="addMember()" [disabled]="!memberToAdd">Ajouter</button>
+    </div>
+
+    <app-chat-room [roomId]="activeRoomId"></app-chat-room>
+  </div>
+
+  <app-call-modal
+    *ngIf="activeCall && activeRoomId"
+    [roomId]="activeRoomId"
+    [mode]="activeCall"
+    (closed)="endCall()"
+  ></app-call-modal>
+</div>

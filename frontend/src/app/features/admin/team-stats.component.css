@@ -1,0 +1,29 @@
+.page { padding: 20px; }
+
+.cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px 20px;
+  border: 1px solid #e5e7eb;
+  min-width: 140px;
+}
+
+.card.overdue { border-color: #fca5a5; background: #fef2f2; }
+
+.card-value { font-size: 28px; font-weight: 700; }
+.card-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+.workload { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.workload-row { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.workload-row .name { width: 180px; flex-shrink: 0; }
+.workload-row .role { color: #9ca3af; font-size: 12px; }
+.bar-track { flex: 1; background: #f3f4f6; border-radius: 4px; height: 10px; overflow: hidden; }
+.bar { background: #2563eb; height: 100%; }
+.count { width: 24px; text-align: right; }

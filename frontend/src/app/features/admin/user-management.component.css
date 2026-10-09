@@ -1,0 +1,22 @@
+.page { padding: 20px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.page-header button { background: #2563eb; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; }
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  max-width: 360px;
+  border: 1px solid #e5e7eb;
+}
+.user-form input, .user-form select { padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; }
+.user-form button { align-self: flex-start; background: #7c3aed; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+.error { color: #dc2626; font-size: 13px; }
+
+.user-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+.user-table th, .user-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+.toggle-btn { border: 1px solid #d1d5db; background: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }

@@ -1,0 +1,11 @@
+<div class="call-overlay">
+  <div class="call-header">
+    <span>{{ mode === 'audio' ? '🎙️ Appel vocal' : '🎥 Appel vidéo' }}</span>
+    <button (click)="close()">✕ Quitter</button>
+  </div>
+  <iframe
+    [src]="callUrl"
+    allow="camera; microphone; fullscreen; display-capture; autoplay"
+    class="call-frame"
+  ></iframe>
+</div>

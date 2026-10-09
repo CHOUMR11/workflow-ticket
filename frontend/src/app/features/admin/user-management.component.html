@@ -1,0 +1,41 @@
+<div class="page">
+  <div class="page-header">
+    <h2>Utilisateurs</h2>
+    <button (click)="showForm = !showForm">{{ showForm ? 'Annuler' : '+ Nouvel utilisateur' }}</button>
+  </div>
+
+  <form class="user-form" *ngIf="showForm" (ngSubmit)="submit()">
+    <input type="text" [(ngModel)]="draft.name" name="name" placeholder="Nom complet" required />
+    <input type="email" [(ngModel)]="draft.email" name="email" placeholder="Email" required />
+    <input type="password" [(ngModel)]="draft.password" name="password" placeholder="Mot de passe" required />
+    <select [(ngModel)]="draft.role" name="role">
+      <option value="admin">Director / Admin</option>
+      <option value="agent">Agent de réception</option>
+      <option value="accounting">Comptabilité</option>
+      <option value="support">Administrateur / Développeur</option>
+    </select>
+    <div class="error" *ngIf="error">{{ error }}</div>
+    <button type="submit" [disabled]="submitting">{{ submitting ? 'Création...' : 'Créer le compte' }}</button>
+  </form>
+
+  <table class="user-table">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let u of users">
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.role }}</td>
+        <td>{{ u.isActive === false ? 'Inactif' : 'Actif' }}</td>
+        <td><button class="toggle-btn" (click)="toggleActive(u)">{{ u.isActive === false ? 'Réactiver' : 'Désactiver' }}</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
